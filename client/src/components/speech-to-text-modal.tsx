@@ -99,11 +99,11 @@ export function SpeechToTextModal({ children }: { children: React.ReactNode }) {
               variant="secondary"
               onClick={() => {
                 setOpen(false);
-                console.log("Text übernommen:", text);
+                console.log("Text gespeichert:", text);
               }}
               className="w-full"
             >
-              Übernehmen
+              Speichern
             </Button>
           </div>
         </div>
