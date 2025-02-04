@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Coffee, Plus, Pencil, Trash2 } from "lucide-react";
+import { Coffee, Plus, Pencil, Trash2, Mic } from "lucide-react";
 import { AddDrinkModal } from "@/components/add-drink-modal";
+import { SpeechToTextModal } from "@/components/speech-to-text-modal";
 import { MetabolismChart } from "@/components/metabolism-chart";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -103,12 +104,20 @@ export default function Home() {
             <Coffee className="h-8 w-8 text-primary" />
             Caffeine Tracker
           </h1>
-          <AddDrinkModal>
-            <Button size="lg">
-              <Plus className="mr-2 h-5 w-5" />
-              Add Drink
-            </Button>
-          </AddDrinkModal>
+          <div className="flex gap-2">
+            <SpeechToTextModal>
+              <Button size="lg">
+                <Mic className="mr-2 h-5 w-5" />
+                Speech Input
+              </Button>
+            </SpeechToTextModal>
+            <AddDrinkModal>
+              <Button size="lg">
+                <Plus className="mr-2 h-5 w-5" />
+                Add Drink
+              </Button>
+            </AddDrinkModal>
+          </div>
         </div>
 
         <Card>
@@ -130,9 +139,9 @@ export default function Home() {
             </Select>
           </CardHeader>
           <CardContent>
-            <MetabolismChart 
-              intakes={intakes} 
-              timeRange={timeRange} 
+            <MetabolismChart
+              intakes={intakes}
+              timeRange={timeRange}
               sleepStart={userSettings?.sleepStart}
               sleepEnd={userSettings?.sleepEnd}
             />
