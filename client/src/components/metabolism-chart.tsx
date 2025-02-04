@@ -43,23 +43,27 @@ export function MetabolismChart({ intakes, timeRange = '24h' }: Props) {
 
     const dataPoints: Array<{ time: string; [key: string]: number | string }> = [];
 
-    // Calculate time range in hours
-    const timeRangeHours = timeRange === '1w' ? 168 : 
-                          timeRange === '72h' ? 72 :
-                          timeRange === '48h' ? 48 : 24;
+    // Calculate total time range in hours
+    const totalHours = timeRange === '1w' ? 168 : 
+                      timeRange === '72h' ? 72 :
+                      timeRange === '48h' ? 48 : 24;
 
-    // Start from now minus the time range
-    const startTime = new Date();
-    startTime.setHours(startTime.getHours() - timeRangeHours);
+    // Calculate half of the time range to show before and after current time
+    const halfRangeHours = totalHours / 2;
 
-    // End at current time
-    const endTime = new Date();
+    // Start from current time minus half the range
+    const startTime = new Date(currentTime);
+    startTime.setHours(currentTime.getHours() - halfRangeHours);
+
+    // End at current time plus half the range
+    const endTime = new Date(currentTime);
+    endTime.setHours(currentTime.getHours() + halfRangeHours);
 
     // Calculate interval based on time range
-    const intervalMinutes = timeRangeHours <= 24 ? 10 : // 10 min for 24h
-                           timeRangeHours <= 48 ? 20 : // 20 min for 48h
-                           timeRangeHours <= 72 ? 30 : // 30 min for 72h
-                           60; // 1 hour for 1 week
+    const intervalMinutes = totalHours <= 24 ? 10 : // 10 min for 24h
+                          totalHours <= 48 ? 20 : // 20 min for 48h
+                          totalHours <= 72 ? 30 : // 30 min for 72h
+                          60; // 1 hour for 1 week
 
     const points = Math.ceil((endTime.getTime() - startTime.getTime()) / (intervalMinutes * 60 * 1000));
 
@@ -70,8 +74,8 @@ export function MetabolismChart({ intakes, timeRange = '24h' }: Props) {
         time: pointTime.toLocaleString([], {
           hour: '2-digit',
           minute: '2-digit',
-          month: timeRangeHours > 24 ? 'short' : undefined,
-          day: timeRangeHours > 24 ? 'numeric' : undefined,
+          month: totalHours > 24 ? 'short' : undefined,
+          day: totalHours > 24 ? 'numeric' : undefined,
         }),
       };
 
