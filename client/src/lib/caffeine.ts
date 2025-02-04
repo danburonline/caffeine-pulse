@@ -4,9 +4,6 @@ export function calculateCaffeineLevel(
   intakes: Array<{ amount: number; timestamp: string }>,
   currentTime: Date
 ): number {
-  // Add logging for debugging
-  console.log('Calculating caffeine level at:', currentTime, 'with intakes:', intakes);
-
   return intakes.reduce((total, intake) => {
     const intakeTime = new Date(intake.timestamp);
     const timeDiff = currentTime.getTime() - intakeTime.getTime();
@@ -17,12 +14,13 @@ export function calculateCaffeineLevel(
       return total;
     }
 
-    // Calculate remaining caffeine using half-life formula
+    // Calculate remaining caffeine using half-life formula: A = A₀ * (1/2)^(t/t₁/₂)
+    // where A is the remaining amount, A₀ is the initial amount,
+    // t is time elapsed, and t₁/₂ is the half-life
     const halfLives = timeDiff / HALF_LIFE;
     const remainingCaffeine = intake.amount * Math.pow(0.5, halfLives);
 
-    console.log('Intake:', intake, 'Remaining caffeine:', remainingCaffeine);
-
-    return total + remainingCaffeine;
+    // Round to avoid floating point errors and improve performance
+    return total + Math.max(0, Math.round(remainingCaffeine));
   }, 0);
 }

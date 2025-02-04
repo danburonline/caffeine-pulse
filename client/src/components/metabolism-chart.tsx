@@ -7,6 +7,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  ReferenceLine,
 } from "recharts";
 import { Card } from "@/components/ui/card";
 import { calculateCaffeineLevel } from "@/lib/caffeine";
@@ -20,22 +21,31 @@ interface Props {
 
 export function MetabolismChart({ intakes }: Props) {
   const [data, setData] = useState<Array<{ time: string; level: number }>>([]);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    // Update current time every minute
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     console.log('MetabolismChart received intakes:', intakes);
 
-    const now = new Date();
     const dataPoints: { time: string; level: number }[] = [];
+    const now = new Date();
+    const startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
 
-    // Generate data points for the last 24 hours
-    // We'll create a point every 10 minutes (144 points total)
-    for (let i = 0; i < 144; i++) {
-      const timeOffset = (24 * 60 * 60 * 1000) - (i * 10 * 60 * 1000);
-      const time = new Date(now.getTime() - timeOffset);
-      const level = calculateCaffeineLevel(intakes, time);
+    // Generate data points every 10 minutes
+    for (let i = 0; i <= 144; i++) {
+      const pointTime = new Date(startTime.getTime() + i * 10 * 60 * 1000);
+      const level = calculateCaffeineLevel(intakes, pointTime);
 
       dataPoints.push({
-        time: time.toLocaleTimeString([], { 
+        time: pointTime.toLocaleTimeString([], { 
           hour: '2-digit', 
           minute: '2-digit',
         }),
@@ -45,7 +55,7 @@ export function MetabolismChart({ intakes }: Props) {
 
     console.log('Generated chart data points:', dataPoints);
     setData(dataPoints);
-  }, [intakes]);
+  }, [intakes, currentTime]);
 
   if (!intakes.length) {
     return (
@@ -54,6 +64,11 @@ export function MetabolismChart({ intakes }: Props) {
       </div>
     );
   }
+
+  const currentTimeStr = currentTime.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
   return (
     <div className="h-[300px] w-full">
@@ -88,6 +103,16 @@ export function MetabolismChart({ intakes }: Props) {
                 );
               }
               return null;
+            }}
+          />
+          <ReferenceLine
+            x={currentTimeStr}
+            stroke="hsl(var(--primary))"
+            strokeDasharray="3 3"
+            label={{
+              value: "Now",
+              position: "top",
+              fill: "hsl(var(--primary))",
             }}
           />
           <Line
