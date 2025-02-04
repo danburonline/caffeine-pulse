@@ -26,24 +26,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { WelcomeCard } from "@/components/welcome-card";
 
-type TimeRange = '24h' | '48h' | '72h' | '1w';
+type TimeRange = "24h" | "48h" | "72h" | "1w";
 
 interface UserSettings {
   sleepStart: string;
   sleepEnd: string;
 }
 
-interface Drink {
+export interface Drink {
   id: number;
   name: string;
   caffeineAmount: number;
   isCustom: boolean;
   userId: number | null;
-  color?: string;
+  color: string;
 }
 
-interface Intake {
+export interface Intake {
   id: number;
   userId: number;
   drinkId: number;
@@ -54,7 +55,7 @@ interface Intake {
 
 export default function Home() {
   const { toast } = useToast();
-  const [timeRange, setTimeRange] = useState<TimeRange>('24h');
+  const [timeRange, setTimeRange] = useState<TimeRange>("24h");
 
   // Initialize default drinks
   const initDrinksMutation = useMutation({
@@ -120,6 +121,7 @@ export default function Home() {
           </div>
         </div>
 
+        <WelcomeCard />
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle>Metabolism Chart</CardTitle>
@@ -161,7 +163,7 @@ export default function Home() {
                 >
                   <div>
                     <div className="font-medium">
-                      {intake.drink?.name || 'Custom Drink'}
+                      {intake.drink?.name || "Custom Drink"}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {new Date(intake.timestamp).toLocaleString()}
@@ -184,13 +186,16 @@ export default function Home() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete Intake</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to delete this caffeine intake? This action cannot be undone.
+                            Are you sure you want to delete this caffeine
+                            intake? This action cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction
-                            onClick={() => deleteIntakeMutation.mutate(intake.id)}
+                            onClick={() =>
+                              deleteIntakeMutation.mutate(intake.id)
+                            }
                           >
                             Delete
                           </AlertDialogAction>

@@ -19,18 +19,44 @@ function generateRandomColor() {
   return `hsl(${hue}, 70%, 50%)`;
 }
 
-export function AddDrinkModal({ children }: { children: React.ReactNode }) {
+interface Drink {
+  id: number;
+  name: string;
+  caffeineAmount: number;
+  color: string;
+}
+
+interface Intake {
+  id: number;
+  drinkId: number;
+  amount: number;
+  timestamp: string;
+  drink?: Drink;
+}
+
+interface AddDrinkModalProps {
+  children: React.ReactNode;
+  editIntakeData?: Intake;
+}
+
+export function AddDrinkModal({
+  children,
+  editIntakeData,
+}: AddDrinkModalProps) {
   const [open, setOpen] = useState(false);
   const [customName, setCustomName] = useState("");
   const [customAmount, setCustomAmount] = useState("");
   const [customColor, setCustomColor] = useState(generateRandomColor());
   const [customTime, setCustomTime] = useState(() => {
     const now = new Date();
-    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    return `${now.getHours().toString().padStart(2, "0")}:${now
+      .getMinutes()
+      .toString()
+      .padStart(2, "0")}`;
   });
   const { toast } = useToast();
 
-  const { data: drinks } = useQuery({
+  const { data: drinks = [] } = useQuery<Drink[]>({
     queryKey: ["/api/drinks"],
   });
 
@@ -72,7 +98,7 @@ export function AddDrinkModal({ children }: { children: React.ReactNode }) {
         name,
         caffeineAmount,
         color,
-      }).then(res => res.json());
+      }).then((res) => res.json());
 
       await addIntakeMutation.mutateAsync({
         drinkId: drink.id,
@@ -87,14 +113,17 @@ export function AddDrinkModal({ children }: { children: React.ReactNode }) {
       setCustomColor(generateRandomColor());
       setCustomTime(() => {
         const now = new Date();
-        return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        return `${now.getHours().toString().padStart(2, "0")}:${now
+          .getMinutes()
+          .toString()
+          .padStart(2, "0")}`;
       });
     },
   });
 
-  const handleAddExistingDrink = (drink: any) => {
+  const handleAddExistingDrink = (drink: Drink) => {
     const now = new Date();
-    const [hours, minutes] = customTime.split(':').map(Number);
+    const [hours, minutes] = customTime.split(":").map(Number);
     now.setHours(hours, minutes, 0, 0);
 
     addIntakeMutation.mutate({
@@ -106,7 +135,7 @@ export function AddDrinkModal({ children }: { children: React.ReactNode }) {
 
   const handleAddCustomDrink = () => {
     const now = new Date();
-    const [hours, minutes] = customTime.split(':').map(Number);
+    const [hours, minutes] = customTime.split(":").map(Number);
     now.setHours(hours, minutes, 0, 0);
 
     addCustomDrinkMutation.mutate({
@@ -137,7 +166,7 @@ export function AddDrinkModal({ children }: { children: React.ReactNode }) {
 
             <Label>Common Drinks</Label>
             <div className="grid gap-4">
-              {drinks?.map((drink: any) => (
+              {drinks?.map((drink: Drink) => (
                 <Button
                   key={drink.id}
                   variant="outline"
@@ -145,7 +174,7 @@ export function AddDrinkModal({ children }: { children: React.ReactNode }) {
                   onClick={() => handleAddExistingDrink(drink)}
                   style={{
                     borderColor: drink.color,
-                    borderWidth: '2px',
+                    borderWidth: "2px",
                   }}
                 >
                   <span>{drink.name}</span>
