@@ -8,7 +8,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-  ReferenceArea,
   Legend,
 } from "recharts";
 import { Card } from "@/components/ui/card";
@@ -31,7 +30,7 @@ interface Props {
 export function MetabolismChart({ intakes, timeRange = '24h', sleepStart, sleepEnd }: Props) {
   const [data, setData] = useState<Array<{ time: string; [key: string]: number | string }>>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [sleepAreas, setSleepAreas] = useState<Array<{ start: string; end: string }>>([]);
+  const [sleepTimes, setSleepTimes] = useState<Array<{ time: string; label: string }>>([]);
 
   useEffect(() => {
     // Update current time every minute
@@ -45,8 +44,8 @@ export function MetabolismChart({ intakes, timeRange = '24h', sleepStart, sleepE
   useEffect(() => {
     if (!sleepStart || !sleepEnd) return;
 
-    // Calculate sleep areas
-    const areas: Array<{ start: string; end: string }> = [];
+    // Calculate sleep times
+    const times: Array<{ time: string; label: string }> = [];
     const totalHours = timeRange === '1w' ? 168 : 
                       timeRange === '72h' ? 72 :
                       timeRange === '48h' ? 48 : 24;
@@ -63,31 +62,33 @@ export function MetabolismChart({ intakes, timeRange = '24h', sleepStart, sleepE
     const [sleepEndHour, sleepEndMinute] = sleepEnd.split(':').map(Number);
 
     while (currentDate < endDate) {
-      // Calculate sleep start for current day
+      // Add sleep start time
       const sleepStartDate = new Date(currentDate);
       sleepStartDate.setHours(sleepStartHour, sleepStartMinute, 0, 0);
+      times.push({
+        time: sleepStartDate.toLocaleString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          month: totalHours > 24 ? 'short' : undefined,
+          day: totalHours > 24 ? 'numeric' : undefined,
+        }),
+        label: 'Sleep Start',
+      });
 
-      // Calculate sleep end for next day
+      // Add sleep end time
       const sleepEndDate = new Date(currentDate);
       sleepEndDate.setHours(sleepEndHour, sleepEndMinute, 0, 0);
       if (sleepEndHour < sleepStartHour) {
         sleepEndDate.setDate(sleepEndDate.getDate() + 1);
       }
-
-      // Add sleep area
-      areas.push({
-        start: sleepStartDate.toLocaleString([], {
+      times.push({
+        time: sleepEndDate.toLocaleString([], {
           hour: '2-digit',
           minute: '2-digit',
           month: totalHours > 24 ? 'short' : undefined,
           day: totalHours > 24 ? 'numeric' : undefined,
         }),
-        end: sleepEndDate.toLocaleString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-          month: totalHours > 24 ? 'short' : undefined,
-          day: totalHours > 24 ? 'numeric' : undefined,
-        }),
+        label: 'Sleep End',
       });
 
       // Move to next day
@@ -95,7 +96,7 @@ export function MetabolismChart({ intakes, timeRange = '24h', sleepStart, sleepE
       currentDate.setHours(0, 0, 0, 0);
     }
 
-    setSleepAreas(areas);
+    setSleepTimes(times);
   }, [sleepStart, sleepEnd, currentTime, timeRange]);
 
   useEffect(() => {
@@ -219,14 +220,17 @@ export function MetabolismChart({ intakes, timeRange = '24h', sleepStart, sleepE
             }}
           />
           <Legend />
-          {sleepAreas.map((area, index) => (
-            <ReferenceArea
+          {sleepTimes.map((time, index) => (
+            <ReferenceLine
               key={index}
-              x1={area.start}
-              x2={area.end}
-              fill="hsl(var(--muted))"
-              fillOpacity={0.3}
-              ifOverflow="extendDomain"
+              x={time.time}
+              stroke="hsl(var(--muted-foreground))"
+              strokeDasharray="3 3"
+              label={{
+                value: time.label,
+                position: "top",
+                fill: "hsl(var(--muted-foreground))",
+              }}
             />
           ))}
           <ReferenceLine
