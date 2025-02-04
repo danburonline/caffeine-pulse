@@ -28,6 +28,29 @@ import {
 
 type TimeRange = '24h' | '48h' | '72h' | '1w';
 
+interface UserSettings {
+  sleepStart: string;
+  sleepEnd: string;
+}
+
+interface Drink {
+  id: number;
+  name: string;
+  caffeineAmount: number;
+  isCustom: boolean;
+  userId: number | null;
+  color?: string;
+}
+
+interface Intake {
+  id: number;
+  userId: number;
+  drinkId: number;
+  amount: number;
+  timestamp: string;
+  drink?: Drink;
+}
+
 export default function Home() {
   const { toast } = useToast();
   const [timeRange, setTimeRange] = useState<TimeRange>('24h');
@@ -44,17 +67,17 @@ export default function Home() {
   }, []);
 
   // Get user settings for sleep time
-  const { data: userSettings } = useQuery({
+  const { data: userSettings } = useQuery<UserSettings>({
     queryKey: ["/api/user"],
   });
 
   // Get recent intakes
-  const { data: intakes = [] } = useQuery({
+  const { data: intakes = [] } = useQuery<Intake[]>({
     queryKey: ["/api/intakes"],
   });
 
   // Get all drinks
-  const { data: drinks = [] } = useQuery({
+  const { data: drinks = [] } = useQuery<Drink[]>({
     queryKey: ["/api/drinks"],
   });
 
@@ -122,7 +145,7 @@ export default function Home() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {intakes?.map((intake: any) => (
+              {intakes?.map((intake) => (
                 <div
                   key={intake.id}
                   className="flex items-center justify-between border-b pb-2"
@@ -137,7 +160,7 @@ export default function Home() {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="font-medium">{intake.amount}mg</div>
-                    <AddDrinkModal editIntake={intake}>
+                    <AddDrinkModal editIntakeData={intake}>
                       <Button variant="ghost" size="icon">
                         <Pencil className="h-4 w-4" />
                       </Button>
