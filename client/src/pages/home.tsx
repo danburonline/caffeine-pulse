@@ -43,6 +43,11 @@ export default function Home() {
     initDrinksMutation.mutate();
   }, []);
 
+  // Get user settings for sleep time
+  const { data: userSettings } = useQuery({
+    queryKey: ["/api/user"],
+  });
+
   // Get recent intakes
   const { data: intakes = [] } = useQuery({
     queryKey: ["/api/intakes"],
@@ -85,7 +90,7 @@ export default function Home() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle>24-Hour Metabolism</CardTitle>
+            <CardTitle>Metabolism Chart</CardTitle>
             <Select
               value={timeRange}
               onValueChange={(value) => setTimeRange(value as TimeRange)}
@@ -102,7 +107,12 @@ export default function Home() {
             </Select>
           </CardHeader>
           <CardContent>
-            <MetabolismChart intakes={intakes} timeRange={timeRange} />
+            <MetabolismChart 
+              intakes={intakes} 
+              timeRange={timeRange} 
+              sleepStart={userSettings?.sleepStart}
+              sleepEnd={userSettings?.sleepEnd}
+            />
           </CardContent>
         </Card>
 

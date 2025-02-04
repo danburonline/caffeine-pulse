@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  ReferenceArea,
   Legend,
 } from "recharts";
 import { Card } from "@/components/ui/card";
@@ -23,11 +24,14 @@ interface Props {
     };
   }>;
   timeRange?: '24h' | '48h' | '72h' | '1w';
+  sleepStart?: string;
+  sleepEnd?: string;
 }
 
-export function MetabolismChart({ intakes, timeRange = '24h' }: Props) {
+export function MetabolismChart({ intakes, timeRange = '24h', sleepStart, sleepEnd }: Props) {
   const [data, setData] = useState<Array<{ time: string; [key: string]: number | string }>>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [sleepAreas, setSleepAreas] = useState<Array<{ start: string; end: string }>>([]);
 
   useEffect(() => {
     // Update current time every minute
@@ -37,6 +41,62 @@ export function MetabolismChart({ intakes, timeRange = '24h' }: Props) {
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!sleepStart || !sleepEnd) return;
+
+    // Calculate sleep areas
+    const areas: Array<{ start: string; end: string }> = [];
+    const totalHours = timeRange === '1w' ? 168 : 
+                      timeRange === '72h' ? 72 :
+                      timeRange === '48h' ? 48 : 24;
+
+    const halfRangeHours = totalHours / 2;
+    const startDate = new Date(currentTime);
+    startDate.setHours(currentTime.getHours() - halfRangeHours);
+    const endDate = new Date(currentTime);
+    endDate.setHours(currentTime.getHours() + halfRangeHours);
+
+    // Convert sleep times to Date objects
+    let currentDate = new Date(startDate);
+    const [sleepStartHour, sleepStartMinute] = sleepStart.split(':').map(Number);
+    const [sleepEndHour, sleepEndMinute] = sleepEnd.split(':').map(Number);
+
+    while (currentDate < endDate) {
+      // Calculate sleep start for current day
+      const sleepStartDate = new Date(currentDate);
+      sleepStartDate.setHours(sleepStartHour, sleepStartMinute, 0, 0);
+
+      // Calculate sleep end for next day
+      const sleepEndDate = new Date(currentDate);
+      sleepEndDate.setHours(sleepEndHour, sleepEndMinute, 0, 0);
+      if (sleepEndHour < sleepStartHour) {
+        sleepEndDate.setDate(sleepEndDate.getDate() + 1);
+      }
+
+      // Add sleep area
+      areas.push({
+        start: sleepStartDate.toLocaleString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          month: totalHours > 24 ? 'short' : undefined,
+          day: totalHours > 24 ? 'numeric' : undefined,
+        }),
+        end: sleepEndDate.toLocaleString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          month: totalHours > 24 ? 'short' : undefined,
+          day: totalHours > 24 ? 'numeric' : undefined,
+        }),
+      });
+
+      // Move to next day
+      currentDate.setDate(currentDate.getDate() + 1);
+      currentDate.setHours(0, 0, 0, 0);
+    }
+
+    setSleepAreas(areas);
+  }, [sleepStart, sleepEnd, currentTime, timeRange]);
 
   useEffect(() => {
     console.log('MetabolismChart received intakes:', intakes);
@@ -159,6 +219,16 @@ export function MetabolismChart({ intakes, timeRange = '24h' }: Props) {
             }}
           />
           <Legend />
+          {sleepAreas.map((area, index) => (
+            <ReferenceArea
+              key={index}
+              x1={area.start}
+              x2={area.end}
+              fill="hsl(var(--muted))"
+              fillOpacity={0.3}
+              ifOverflow="extendDomain"
+            />
+          ))}
           <ReferenceLine
             x={currentTimeStr}
             stroke="hsl(var(--primary))"
