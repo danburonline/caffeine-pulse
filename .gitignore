@@ -120,6 +120,9 @@ web_modules/
 .env.local
 .env.development
 
+# Package lock file
+package-lock.json
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
