@@ -17,7 +17,7 @@ export function calculateCaffeineLevelForIntake(
   const remainingCaffeine = intake.amount * Math.pow(0.5, halfLives);
 
   // Round to avoid floating point errors and improve performance
-  return Math.max(0, Math.round(remainingCaffeine));
+  return Math.max(0, Math.round(remainingCaffeine * 100) / 100);
 }
 
 export function calculateCaffeineLevel(
