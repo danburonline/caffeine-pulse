@@ -19,125 +19,80 @@ A comprehensive caffeine tracking application that provides real-time, personali
 - UI Components: shadcn/ui
 - Charts: Recharts
 
-## Local Development Setup
+## Development Options
 
-### Prerequisites
+There are several ways to run the application for development:
 
-- Node.js >= 18
-- npm >= 9
-- PostgreSQL >= 15
+### Option 1: Frontend Development (Backend + DB in Docker)
+This setup runs the backend and database in Docker while you develop the frontend locally.
 
-### Environment Variables
-
-Create a `.env` file in the root directory:
-
-```env
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/caffeine_tracker
+1. Start the backend and database:
+```bash
+docker compose up
 ```
 
-### Local Setup (without Docker)
-
-1. Install dependencies:
+2. Install dependencies locally:
 ```bash
 npm install
 ```
 
-2. Start the development server (both frontend and backend):
+3. Start the frontend development server:
+```bash
+npm run dev:frontend
+```
+
+### Option 2: Full Local Development (DB in Docker)
+This setup runs only the database in Docker while you develop both frontend and backend locally.
+
+1. Start the database:
+```bash
+docker compose -f docker-compose.dev.yml up
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start the development server (both frontend and backend):
 ```bash
 npm run dev
 ```
 
-The application will be available at `http://localhost:5000`.
+### Option 3: Fully Local Setup (No Docker)
 
-## Docker Development Setup
+#### Prerequisites:
+- Node.js >= 18
+- npm >= 9
+- PostgreSQL >= 15
 
-### Database Setup
+1. Set up your local PostgreSQL database and create a database named `caffeine_tracker`
 
-1. Create a `docker-compose.yml` file in the root directory:
-
-```yaml
-version: '3.8'
-services:
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: caffeine_tracker
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
+2. Create a `.env` file:
+```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/caffeine_tracker
 ```
 
-2. Start the PostgreSQL container:
+3. Install dependencies:
 ```bash
-docker compose up -d
+npm install
 ```
 
-### Development with Docker Compose
-
-For a complete development environment, create a `docker-compose.dev.yml`:
-
-```yaml
-version: '3.8'
-services:
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: caffeine_tracker
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  backend:
-    build:
-      context: .
-      target: development
-    volumes:
-      - .:/app
-      - /app/node_modules
-    ports:
-      - "5000:5000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/caffeine_tracker
-    depends_on:
-      - postgres
-    command: npm run dev
-
-  frontend:
-    build:
-      context: .
-      target: development
-    volumes:
-      - .:/app
-      - /app/node_modules
-    ports:
-      - "3000:3000"
-    environment:
-      - VITE_API_URL=http://localhost:5000
-    depends_on:
-      - backend
-    command: npm run dev:frontend
-
-volumes:
-  postgres_data:
-```
-
-To start the development environment:
+4. Initialize the database:
 ```bash
-docker compose -f docker-compose.dev.yml up
+psql -U postgres -d caffeine_tracker -f init.sql
+```
+
+5. Start the development server:
+```bash
+npm run dev
 ```
 
 ## Available Scripts
 
 - `npm run dev`: Start both frontend and backend in development mode
+- `npm run dev:frontend`: Start only the frontend in development mode
+- `npm run dev:backend`: Start only the backend in development mode
 - `npm run build`: Build the application for production
 - `npm run db:push`: Push database schema changes
 
