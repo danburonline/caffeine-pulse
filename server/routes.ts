@@ -9,130 +9,176 @@ export function registerRoutes(app: Express) {
 
   // Get or create default user
   app.get("/api/user", async (req, res) => {
-    let user = await db.query.users.findFirst();
-    if (!user) {
-      const [newUser] = await db.insert(users).values({}).returning();
-      user = newUser;
+    try {
+      let user = await db.query.users.findFirst();
+
+      if (!user) {
+        console.log("No user found, creating default user...");
+        const [newUser] = await db.insert(users).values({}).returning();
+        user = newUser;
+        console.log("Created user:", user);
+      }
+
+      res.json(user);
+    } catch (error) {
+      console.error("Error in /api/user:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
-    res.json(user);
   });
 
   // Update user preferences
   app.patch("/api/user", async (req, res) => {
-    const { sleepStart, sleepEnd } = req.body;
-    const user = await db.query.users.findFirst();
-    if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
+    try {
+      const { sleepStart, sleepEnd } = req.body;
+      const user = await db.query.users.findFirst();
+      if (!user) {
+        res.status(404).json({ message: "User not found, try refreshing the page" });
+        return;
+      }
 
-    const [updated] = await db.update(users)
-      .set({ sleepStart, sleepEnd })
-      .where(eq(users.id, user.id))
-      .returning();
-    res.json(updated);
+      const [updated] = await db.update(users)
+        .set({ sleepStart, sleepEnd })
+        .where(eq(users.id, user.id))
+        .returning();
+      res.json(updated);
+    } catch (error) {
+      console.error("Error in PATCH /api/user:", error);
+      res.status(500).json({ message: "Failed to update user preferences" });
+    }
   });
 
   // Get all drinks
   app.get("/api/drinks", async (req, res) => {
-    const user = await db.query.users.findFirst();
-    if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
+    try {
+      const user = await db.query.users.findFirst();
+      if (!user) {
+        await db.insert(users).values({}).returning();
+        const allDrinks = await db.query.drinks.findMany({
+          where: eq(drinks.isCustom, false),
+        });
+        res.json(allDrinks);
+        return;
+      }
 
-    const allDrinks = await db.query.drinks.findMany({
-      where: or(
-        eq(drinks.userId, user.id),
-        eq(drinks.isCustom, false)
-      ),
-    });
-    res.json(allDrinks);
+      const allDrinks = await db.query.drinks.findMany({
+        where: or(
+          eq(drinks.userId, user.id),
+          eq(drinks.isCustom, false)
+        ),
+      });
+      res.json(allDrinks);
+    } catch (error) {
+      console.error("Error in GET /api/drinks:", error);
+      res.status(500).json({ message: "Failed to fetch drinks" });
+    }
   });
 
   // Create custom drink
   app.post("/api/drinks", async (req, res) => {
-    const { name, caffeineAmount } = req.body;
-    const user = await db.query.users.findFirst();
-    if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
+    try {
+      const { name, caffeineAmount } = req.body;
+      let user = await db.query.users.findFirst();
 
-    const [drink] = await db.insert(drinks)
-      .values({
-        name,
-        caffeineAmount,
-        isCustom: true,
-        userId: user.id,
-      })
-      .returning();
-    res.json(drink);
+      if (!user) {
+        const [newUser] = await db.insert(users).values({}).returning();
+        user = newUser;
+      }
+
+      const [drink] = await db.insert(drinks)
+        .values({
+          name,
+          caffeineAmount,
+          isCustom: true,
+          userId: user.id,
+        })
+        .returning();
+      res.json(drink);
+    } catch (error) {
+      console.error("Error in POST /api/drinks:", error);
+      res.status(500).json({ message: "Failed to create custom drink" });
+    }
   });
 
   // Log intake
   app.post("/api/intakes", async (req, res) => {
-    const { drinkId, amount } = req.body;
-    const user = await db.query.users.findFirst();
-    if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
+    try {
+      const { drinkId, amount } = req.body;
+      let user = await db.query.users.findFirst();
 
-    const [intake] = await db.insert(intakes)
-      .values({
-        userId: user.id,
-        drinkId,
-        amount,
-      })
-      .returning();
-    res.json(intake);
+      if (!user) {
+        const [newUser] = await db.insert(users).values({}).returning();
+        user = newUser;
+      }
+
+      const [intake] = await db.insert(intakes)
+        .values({
+          userId: user.id,
+          drinkId,
+          amount,
+        })
+        .returning();
+      res.json(intake);
+    } catch (error) {
+      console.error("Error in POST /api/intakes:", error);
+      res.status(500).json({ message: "Failed to log intake" });
+    }
   });
 
   // Get recent intakes
   app.get("/api/intakes", async (req, res) => {
-    const user = await db.query.users.findFirst();
-    if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
+    try {
+      let user = await db.query.users.findFirst();
 
-    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const recentIntakes = await db.query.intakes.findMany({
-      where: and(
-        eq(intakes.userId, user.id),
-        gte(intakes.timestamp, dayAgo)
-      ),
-      orderBy: desc(intakes.timestamp),
-      with: {
-        drink: true,
-      },
-    });
-    res.json(recentIntakes);
+      if (!user) {
+        const [newUser] = await db.insert(users).values({}).returning();
+        user = newUser;
+      }
+
+      const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const recentIntakes = await db.query.intakes.findMany({
+        where: and(
+          eq(intakes.userId, user.id),
+          gte(intakes.timestamp, dayAgo)
+        ),
+        orderBy: desc(intakes.timestamp),
+        with: {
+          drink: true,
+        },
+      });
+      res.json(recentIntakes);
+    } catch (error) {
+      console.error("Error in GET /api/intakes:", error);
+      res.status(500).json({ message: "Failed to fetch intakes" });
+    }
   });
 
   // Initialize default drinks if none exist
   app.post("/api/drinks/init", async (req, res) => {
-    const existingDrinks = await db.query.drinks.findMany({
-      where: eq(drinks.isCustom, false),
-    });
+    try {
+      const existingDrinks = await db.query.drinks.findMany({
+        where: eq(drinks.isCustom, false),
+      });
 
-    if (existingDrinks.length === 0) {
-      const defaultDrinks = [
-        { name: "Coffee (8 oz)", caffeineAmount: 95 },
-        { name: "Espresso Shot", caffeineAmount: 64 },
-        { name: "Black Tea", caffeineAmount: 47 },
-        { name: "Green Tea", caffeineAmount: 28 },
-        { name: "Cola (12 oz)", caffeineAmount: 34 },
-        { name: "Energy Drink (8 oz)", caffeineAmount: 80 },
-      ];
+      if (existingDrinks.length === 0) {
+        const defaultDrinks = [
+          { name: "Coffee (8 oz)", caffeineAmount: 95 },
+          { name: "Espresso Shot", caffeineAmount: 64 },
+          { name: "Black Tea", caffeineAmount: 47 },
+          { name: "Green Tea", caffeineAmount: 28 },
+          { name: "Cola (12 oz)", caffeineAmount: 34 },
+          { name: "Energy Drink (8 oz)", caffeineAmount: 80 },
+        ];
 
-      await db.insert(drinks)
-        .values(defaultDrinks.map(d => ({ ...d, isCustom: false })))
-        .returning();
+        await db.insert(drinks)
+          .values(defaultDrinks.map(d => ({ ...d, isCustom: false })))
+          .returning();
+      }
+
+      res.json({ message: "Default drinks initialized" });
+    } catch (error) {
+      console.error("Error in POST /api/drinks/init:", error);
+      res.status(500).json({ message: "Failed to initialize default drinks" });
     }
-
-    res.json({ message: "Default drinks initialized" });
   });
 
   return httpServer;
