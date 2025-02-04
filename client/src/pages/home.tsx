@@ -23,12 +23,12 @@ export default function Home() {
   }, []);
 
   // Get recent intakes
-  const { data: intakes } = useQuery({
+  const { data: intakes = [] } = useQuery({
     queryKey: ["/api/intakes"],
   });
 
   // Get all drinks
-  const { data: drinks } = useQuery({
+  const { data: drinks = [] } = useQuery({
     queryKey: ["/api/drinks"],
   });
 
@@ -53,7 +53,7 @@ export default function Home() {
             <CardTitle>24-Hour Metabolism</CardTitle>
           </CardHeader>
           <CardContent>
-            <MetabolismChart intakes={intakes || []} />
+            <MetabolismChart intakes={intakes} />
           </CardContent>
         </Card>
 
@@ -69,7 +69,9 @@ export default function Home() {
                   className="flex items-center justify-between border-b pb-2"
                 >
                   <div>
-                    <div className="font-medium">{intake.drink.name}</div>
+                    <div className="font-medium">
+                      {intake.drink?.name || 'Custom Drink'}
+                    </div>
                     <div className="text-sm text-muted-foreground">
                       {new Date(intake.timestamp).toLocaleTimeString()}
                     </div>
