@@ -1,5 +1,7 @@
 # Caffeine Tracker
 
+![Caffeine Tracker](screenshot.png)
+
 A comprehensive caffeine tracking application that provides real-time, personalized insights into users' caffeine metabolism and consumption patterns.
 
 ## Features
