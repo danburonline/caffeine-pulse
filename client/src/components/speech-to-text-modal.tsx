@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,19 +9,24 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Mic, MicOff } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 export function SpeechToTextModal({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
 
   const startListening = useCallback(() => {
-    if (!('webkitSpeechRecognition' in window)) {
-      alert('Speech recognition is not supported in your browser. Please use Chrome.');
+    if (!("webkitSpeechRecognition" in window)) {
+      alert(
+        "Speech recognition is not supported in your browser. Please use Chrome."
+      );
       return;
     }
 
-    const recognition = new (window as any).webkitSpeechRecognition();
+    recognitionRef.current = new (window as any).webkitSpeechRecognition();
+    const recognition = recognitionRef.current;
     recognition.continuous = true;
     recognition.interimResults = true;
 
@@ -32,13 +37,13 @@ export function SpeechToTextModal({ children }: { children: React.ReactNode }) {
     recognition.onresult = (event: any) => {
       const transcript = Array.from(event.results)
         .map((result: any) => result[0])
-        .map(result => result.transcript)
-        .join('');
+        .map((result) => result.transcript)
+        .join("");
       setText(transcript);
     };
 
     recognition.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
+      console.error("Speech recognition error:", event.error);
       setIsListening(false);
     };
 
@@ -50,8 +55,9 @@ export function SpeechToTextModal({ children }: { children: React.ReactNode }) {
   }, []);
 
   const stopListening = useCallback(() => {
-    const recognition = new (window as any).webkitSpeechRecognition();
-    recognition.stop();
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
     setIsListening(false);
   }, []);
 
@@ -63,13 +69,15 @@ export function SpeechToTextModal({ children }: { children: React.ReactNode }) {
           <DialogTitle>Speech to Text</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <Input
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Your speech will appear here..."
-            className="h-24"
-          />
-          <div className="flex justify-center">
+          <div className="flex gap-2">
+            <Textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Ihre Sprache wird hier erscheinen..."
+              className="min-h-[100px]"
+            />
+          </div>
+          <div className="flex justify-center gap-2">
             <Button
               variant={isListening ? "destructive" : "default"}
               onClick={isListening ? stopListening : startListening}
@@ -78,14 +86,24 @@ export function SpeechToTextModal({ children }: { children: React.ReactNode }) {
               {isListening ? (
                 <>
                   <MicOff className="mr-2 h-5 w-5" />
-                  Stop Listening
+                  Aufnahme stoppen
                 </>
               ) : (
                 <>
                   <Mic className="mr-2 h-5 w-5" />
-                  Start Listening
+                  Aufnahme starten
                 </>
               )}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setOpen(false);
+                console.log("Text übernommen:", text);
+              }}
+              className="w-full"
+            >
+              Übernehmen
             </Button>
           </div>
         </div>

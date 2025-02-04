@@ -103,7 +103,7 @@ export default function Home() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Coffee className="h-8 w-8 text-primary" />
-            Caffeine Tracker
+            Caffeine Trackerx
           </h1>
           <div className="flex gap-2">
             <SpeechToTextModal>
