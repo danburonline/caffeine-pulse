@@ -36,11 +36,11 @@ export function MetabolismChart({ intakes }: Props) {
     console.log('MetabolismChart received intakes:', intakes);
 
     const dataPoints: { time: string; level: number }[] = [];
-    const now = new Date();
-    const startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
+    const startTime = currentTime;
+    const endTime = new Date(startTime.getTime() + 16 * 60 * 60 * 1000); // 16 hours into future
 
     // Generate data points every 10 minutes
-    for (let i = 0; i <= 144; i++) {
+    for (let i = 0; i <= 96; i++) { // 96 points = 16 hours with 10-minute intervals
       const pointTime = new Date(startTime.getTime() + i * 10 * 60 * 1000);
       const level = calculateCaffeineLevel(intakes, pointTime);
 
@@ -77,7 +77,7 @@ export function MetabolismChart({ intakes }: Props) {
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             dataKey="time"
-            interval={23}
+            interval={23} // Show fewer time labels
             tick={{ fontSize: 12 }}
           />
           <YAxis
@@ -87,6 +87,7 @@ export function MetabolismChart({ intakes }: Props) {
               position: 'insideLeft',
               style: { fontSize: 12 },
             }}
+            domain={[0, 'auto']} // Start from 0, auto-scale max
           />
           <Tooltip
             content={({ active, payload }) => {

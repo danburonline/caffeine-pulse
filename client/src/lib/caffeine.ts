@@ -8,7 +8,7 @@ export function calculateCaffeineLevel(
     const intakeTime = new Date(intake.timestamp);
     const timeDiff = currentTime.getTime() - intakeTime.getTime();
 
-    // If intake is in the future relative to current time, ignore it
+    // If intake is in the future relative to current time, don't include it
     if (timeDiff < 0) {
       console.log('Ignoring future intake:', intake);
       return total;
