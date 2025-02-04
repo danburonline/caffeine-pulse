@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,9 +18,19 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type TimeRange = '24h' | '48h' | '72h' | '1w';
 
 export default function Home() {
   const { toast } = useToast();
+  const [timeRange, setTimeRange] = useState<TimeRange>('24h');
 
   // Initialize default drinks
   const initDrinksMutation = useMutation({
@@ -74,11 +84,25 @@ export default function Home() {
         </div>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle>24-Hour Metabolism</CardTitle>
+            <Select
+              value={timeRange}
+              onValueChange={(value) => setTimeRange(value as TimeRange)}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select time range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="24h">Last 24 Hours</SelectItem>
+                <SelectItem value="48h">Last 48 Hours</SelectItem>
+                <SelectItem value="72h">Last 72 Hours</SelectItem>
+                <SelectItem value="1w">Last Week</SelectItem>
+              </SelectContent>
+            </Select>
           </CardHeader>
           <CardContent>
-            <MetabolismChart intakes={intakes} />
+            <MetabolismChart intakes={intakes} timeRange={timeRange} />
           </CardContent>
         </Card>
 
@@ -98,7 +122,7 @@ export default function Home() {
                       {intake.drink?.name || 'Custom Drink'}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {new Date(intake.timestamp).toLocaleTimeString()}
+                      {new Date(intake.timestamp).toLocaleString()}
                     </div>
                   </div>
                   <div className="flex items-center gap-4">

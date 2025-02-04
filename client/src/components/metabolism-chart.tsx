@@ -22,10 +22,11 @@ interface Props {
       color?: string;
     };
   }>;
+  timeRange?: '24h' | '48h' | '72h' | '1w';
 }
 
-export function MetabolismChart({ intakes }: Props) {
-  const [data, setData] = useState<Array<{ time: string; [key: string]: number }>>([]);
+export function MetabolismChart({ intakes, timeRange = '24h' }: Props) {
+  const [data, setData] = useState<Array<{ time: string; [key: string]: number | string }>>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -40,24 +41,37 @@ export function MetabolismChart({ intakes }: Props) {
   useEffect(() => {
     console.log('MetabolismChart received intakes:', intakes);
 
-    const dataPoints: Array<{ time: string; [key: string]: number }> = [];
+    const dataPoints: Array<{ time: string; [key: string]: number | string }> = [];
 
-    // Start from today at midnight
+    // Calculate time range in hours
+    const timeRangeHours = timeRange === '1w' ? 168 : 
+                          timeRange === '72h' ? 72 :
+                          timeRange === '48h' ? 48 : 24;
+
+    // Start from now minus the time range
     const startTime = new Date();
-    startTime.setHours(0, 0, 0, 0);
+    startTime.setHours(startTime.getHours() - timeRangeHours);
 
-    // End at next midnight
-    const endTime = new Date(startTime);
-    endTime.setHours(24, 0, 0, 0);
+    // End at current time
+    const endTime = new Date();
 
-    // Generate data points every 10 minutes
-    for (let i = 0; i <= 144; i++) { // 144 points = 24 hours with 10-minute intervals
-      const pointTime = new Date(startTime.getTime() + i * 10 * 60 * 1000);
+    // Calculate interval based on time range
+    const intervalMinutes = timeRangeHours <= 24 ? 10 : // 10 min for 24h
+                           timeRangeHours <= 48 ? 20 : // 20 min for 48h
+                           timeRangeHours <= 72 ? 30 : // 30 min for 72h
+                           60; // 1 hour for 1 week
 
-      const point: { time: string; [key: string]: number } = {
-        time: pointTime.toLocaleTimeString([], { 
-          hour: '2-digit', 
+    const points = Math.ceil((endTime.getTime() - startTime.getTime()) / (intervalMinutes * 60 * 1000));
+
+    for (let i = 0; i <= points; i++) {
+      const pointTime = new Date(startTime.getTime() + i * intervalMinutes * 60 * 1000);
+
+      const point: { time: string; [key: string]: number | string } = {
+        time: pointTime.toLocaleString([], {
+          hour: '2-digit',
           minute: '2-digit',
+          month: timeRangeHours > 24 ? 'short' : undefined,
+          day: timeRangeHours > 24 ? 'numeric' : undefined,
         }),
       };
 
@@ -73,7 +87,7 @@ export function MetabolismChart({ intakes }: Props) {
 
     console.log('Generated chart data points:', dataPoints);
     setData(dataPoints);
-  }, [intakes, currentTime]);
+  }, [intakes, currentTime, timeRange]);
 
   if (!intakes.length) {
     return (
@@ -83,9 +97,11 @@ export function MetabolismChart({ intakes }: Props) {
     );
   }
 
-  const currentTimeStr = currentTime.toLocaleTimeString([], {
+  const currentTimeStr = currentTime.toLocaleString([], {
     hour: '2-digit',
     minute: '2-digit',
+    month: timeRange !== '24h' ? 'short' : undefined,
+    day: timeRange !== '24h' ? 'numeric' : undefined,
   });
 
   // Use drink colors or generate consistent colors for unnamed drinks
@@ -104,8 +120,11 @@ export function MetabolismChart({ intakes }: Props) {
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             dataKey="time"
-            interval={23} // Show fewer time labels
+            interval={timeRange === '1w' ? 23 : 11}
             tick={{ fontSize: 12 }}
+            angle={timeRange !== '24h' ? -45 : 0}
+            textAnchor={timeRange !== '24h' ? 'end' : 'middle'}
+            height={timeRange !== '24h' ? 60 : 30}
           />
           <YAxis
             label={{ 
@@ -146,7 +165,6 @@ export function MetabolismChart({ intakes }: Props) {
               fill: "hsl(var(--primary))",
             }}
           />
-          {/* Line for each drink */}
           {intakes.map((intake, index) => {
             const drinkName = intake.drink?.name || `Drink ${index + 1}`;
             const color = intake.drink?.color || defaultColors[index % defaultColors.length];
