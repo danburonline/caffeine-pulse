@@ -14,6 +14,7 @@ export const drinks = pgTable("drinks", {
   caffeineAmount: integer("caffeine_amount").notNull(), // in mg
   isCustom: boolean("is_custom").default(false).notNull(),
   userId: integer("user_id").references(() => users.id),
+  color: text("color").default("#000000").notNull(), // Added color field
 });
 
 export const intakes = pgTable("intakes", {
@@ -24,6 +25,7 @@ export const intakes = pgTable("intakes", {
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
+// Relations remain unchanged
 export const userRelations = relations(users, ({ many }) => ({
   drinks: many(drinks),
   intakes: many(intakes),

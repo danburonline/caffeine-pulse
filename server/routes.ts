@@ -73,10 +73,10 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // Create custom drink
+  // Create custom drink with color
   app.post("/api/drinks", async (req, res) => {
     try {
-      const { name, caffeineAmount } = req.body;
+      const { name, caffeineAmount, color } = req.body;
       let user = await db.query.users.findFirst();
 
       if (!user) {
@@ -88,6 +88,7 @@ export function registerRoutes(app: Express) {
         .values({
           name,
           caffeineAmount,
+          color,
           isCustom: true,
           userId: user.id,
         })
@@ -99,10 +100,10 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // Log intake
+  // Log intake with custom timestamp
   app.post("/api/intakes", async (req, res) => {
     try {
-      const { drinkId, amount } = req.body;
+      const { drinkId, amount, timestamp } = req.body;
       let user = await db.query.users.findFirst();
 
       if (!user) {
@@ -115,6 +116,7 @@ export function registerRoutes(app: Express) {
           userId: user.id,
           drinkId,
           amount,
+          timestamp: timestamp ? new Date(timestamp) : new Date(),
         })
         .returning();
       res.json(intake);
@@ -152,7 +154,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // Initialize default drinks if none exist
+  // Initialize default drinks with colors
   app.post("/api/drinks/init", async (req, res) => {
     try {
       const existingDrinks = await db.query.drinks.findMany({
@@ -161,12 +163,12 @@ export function registerRoutes(app: Express) {
 
       if (existingDrinks.length === 0) {
         const defaultDrinks = [
-          { name: "Coffee (8 oz)", caffeineAmount: 95 },
-          { name: "Espresso Shot", caffeineAmount: 64 },
-          { name: "Black Tea", caffeineAmount: 47 },
-          { name: "Green Tea", caffeineAmount: 28 },
-          { name: "Cola (12 oz)", caffeineAmount: 34 },
-          { name: "Energy Drink (8 oz)", caffeineAmount: 80 },
+          { name: "Coffee (8 oz)", caffeineAmount: 95, color: "hsl(25, 70%, 50%)" },
+          { name: "Espresso Shot", caffeineAmount: 64, color: "hsl(0, 70%, 50%)" },
+          { name: "Black Tea", caffeineAmount: 47, color: "hsl(200, 70%, 50%)" },
+          { name: "Green Tea", caffeineAmount: 28, color: "hsl(150, 70%, 50%)" },
+          { name: "Cola (12 oz)", caffeineAmount: 34, color: "hsl(350, 70%, 50%)" },
+          { name: "Energy Drink (8 oz)", caffeineAmount: 80, color: "hsl(275, 70%, 50%)" },
         ];
 
         await db.insert(drinks)

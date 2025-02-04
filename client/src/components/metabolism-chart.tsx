@@ -19,6 +19,7 @@ interface Props {
     timestamp: string;
     drink?: {
       name: string;
+      color?: string;
     };
   }>;
 }
@@ -40,11 +41,17 @@ export function MetabolismChart({ intakes }: Props) {
     console.log('MetabolismChart received intakes:', intakes);
 
     const dataPoints: Array<{ time: string; total: number; [key: string]: number }> = [];
-    const startTime = currentTime;
-    const endTime = new Date(startTime.getTime() + 16 * 60 * 60 * 1000); // 16 hours into future
+
+    // Start from today at midnight
+    const startTime = new Date();
+    startTime.setHours(0, 0, 0, 0);
+
+    // End at next midnight
+    const endTime = new Date(startTime);
+    endTime.setHours(24, 0, 0, 0);
 
     // Generate data points every 10 minutes
-    for (let i = 0; i <= 96; i++) { // 96 points = 16 hours with 10-minute intervals
+    for (let i = 0; i <= 144; i++) { // 144 points = 24 hours with 10-minute intervals
       const pointTime = new Date(startTime.getTime() + i * 10 * 60 * 1000);
 
       const point: { time: string; total: number; [key: string]: number } = {
@@ -83,8 +90,8 @@ export function MetabolismChart({ intakes }: Props) {
     minute: '2-digit',
   });
 
-  // Generate colors for each drink line
-  const colors = [
+  // Use drink colors or generate consistent colors for unnamed drinks
+  const defaultColors = [
     "hsl(var(--primary))",
     "hsl(var(--chart-1))",
     "hsl(var(--chart-2))",
@@ -144,12 +151,13 @@ export function MetabolismChart({ intakes }: Props) {
           {/* Line for each drink */}
           {intakes.map((intake, index) => {
             const drinkName = intake.drink?.name || `Drink ${index + 1}`;
+            const color = intake.drink?.color || defaultColors[index % defaultColors.length];
             return (
               <Line
                 key={index}
                 type="monotone"
                 dataKey={drinkName}
-                stroke={colors[index % colors.length]}
+                stroke={color}
                 strokeWidth={2}
                 dot={false}
               />
