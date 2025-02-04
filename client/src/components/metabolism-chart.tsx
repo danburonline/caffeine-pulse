@@ -8,19 +8,23 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  Legend,
 } from "recharts";
 import { Card } from "@/components/ui/card";
-import { calculateCaffeineLevel } from "@/lib/caffeine";
+import { calculateCaffeineLevelForIntake } from "@/lib/caffeine";
 
 interface Props {
   intakes: Array<{
     amount: number;
     timestamp: string;
+    drink?: {
+      name: string;
+    };
   }>;
 }
 
 export function MetabolismChart({ intakes }: Props) {
-  const [data, setData] = useState<Array<{ time: string; level: number }>>([]);
+  const [data, setData] = useState<Array<{ time: string; [key: string]: number }>>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -35,22 +39,31 @@ export function MetabolismChart({ intakes }: Props) {
   useEffect(() => {
     console.log('MetabolismChart received intakes:', intakes);
 
-    const dataPoints: { time: string; level: number }[] = [];
+    const dataPoints: Array<{ time: string; total: number; [key: string]: number }> = [];
     const startTime = currentTime;
     const endTime = new Date(startTime.getTime() + 16 * 60 * 60 * 1000); // 16 hours into future
 
     // Generate data points every 10 minutes
     for (let i = 0; i <= 96; i++) { // 96 points = 16 hours with 10-minute intervals
       const pointTime = new Date(startTime.getTime() + i * 10 * 60 * 1000);
-      const level = calculateCaffeineLevel(intakes, pointTime);
 
-      dataPoints.push({
+      const point: { time: string; total: number; [key: string]: number } = {
         time: pointTime.toLocaleTimeString([], { 
           hour: '2-digit', 
           minute: '2-digit',
         }),
-        level: Math.round(level),
+        total: 0,
+      };
+
+      // Calculate levels for each intake
+      intakes.forEach((intake, index) => {
+        const drinkName = intake.drink?.name || `Drink ${index + 1}`;
+        const level = calculateCaffeineLevelForIntake(intake, pointTime);
+        point[drinkName] = level;
+        point.total += level;
       });
+
+      dataPoints.push(point);
     }
 
     console.log('Generated chart data points:', dataPoints);
@@ -70,6 +83,15 @@ export function MetabolismChart({ intakes }: Props) {
     minute: '2-digit',
   });
 
+  // Generate colors for each drink line
+  const colors = [
+    "hsl(var(--primary))",
+    "hsl(var(--chart-1))",
+    "hsl(var(--chart-2))",
+    "hsl(var(--chart-3))",
+    "hsl(var(--chart-4))",
+  ];
+
   return (
     <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -87,7 +109,7 @@ export function MetabolismChart({ intakes }: Props) {
               position: 'insideLeft',
               style: { fontSize: 12 },
             }}
-            domain={[0, 'auto']} // Start from 0, auto-scale max
+            domain={[0, 'auto']}
           />
           <Tooltip
             content={({ active, payload }) => {
@@ -96,9 +118,11 @@ export function MetabolismChart({ intakes }: Props) {
                   <Card className="p-2">
                     <div className="text-sm">
                       <div>{payload[0].payload.time}</div>
-                      <div className="font-bold">
-                        {Math.round(payload[0].value as number)}mg
-                      </div>
+                      {payload.map((entry: any) => (
+                        <div key={entry.name} className="font-bold" style={{ color: entry.color }}>
+                          {entry.name}: {Math.round(entry.value)}mg
+                        </div>
+                      ))}
                     </div>
                   </Card>
                 );
@@ -106,6 +130,7 @@ export function MetabolismChart({ intakes }: Props) {
               return null;
             }}
           />
+          <Legend />
           <ReferenceLine
             x={currentTimeStr}
             stroke="hsl(var(--primary))"
@@ -116,12 +141,28 @@ export function MetabolismChart({ intakes }: Props) {
               fill: "hsl(var(--primary))",
             }}
           />
+          {/* Line for each drink */}
+          {intakes.map((intake, index) => {
+            const drinkName = intake.drink?.name || `Drink ${index + 1}`;
+            return (
+              <Line
+                key={index}
+                type="monotone"
+                dataKey={drinkName}
+                stroke={colors[index % colors.length]}
+                strokeWidth={2}
+                dot={false}
+              />
+            );
+          })}
+          {/* Total line */}
           <Line
             type="monotone"
-            dataKey="level"
+            dataKey="total"
             stroke="hsl(var(--primary))"
             strokeWidth={2}
             dot={false}
+            name="Total"
           />
         </LineChart>
       </ResponsiveContainer>
