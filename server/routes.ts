@@ -3,7 +3,7 @@ import { createServer } from 'node:http'
 import { db } from '@db'
 import { drinks, intakes, users } from '@db/schema'
 import { eq, and, gte, desc, or } from 'drizzle-orm'
-
+import { askGPT } from './llm'
 export function registerRoutes(app: Express) {
   const httpServer = createServer(app)
 
@@ -215,7 +215,7 @@ export function registerRoutes(app: Express) {
   })
 
   // Initialize default drinks with colors
-  app.post('/api/drinks/init', async (req, res) => {
+  app.post('/api/drinks/init', async (_req, res) => {
     try {
       const existingDrinks = await db.query.drinks.findMany({
         where: eq(drinks.isCustom, false),
@@ -266,6 +266,13 @@ export function registerRoutes(app: Express) {
       console.error('Error in POST /api/drinks/init:', error)
       res.status(500).json({ message: 'Failed to initialize default drinks' })
     }
+  })
+
+  // create new api route for asking GPT
+  app.post('/api/natural-language', async (req, res) => {
+    const { message } = req.body
+    const response = await askGPT(message)
+    res.json({ response })
   })
 
   return httpServer
