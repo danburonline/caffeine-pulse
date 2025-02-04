@@ -11,18 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Mic, MicOff } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { chatGPTService } from "@/services/servicesChatgpt";
-import { useToast } from "@/components/ui/use-toast";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function SpeechToTextModal({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [gptResponse, setGptResponse] = useState<string>("");
   const recognitionRef = useRef<any>(null);
-  const { toast } = useToast();
 
   const startListening = useCallback(() => {
     if (!("webkitSpeechRecognition" in window)) {
@@ -72,18 +67,10 @@ export function SpeechToTextModal({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       const response = await chatGPTService.getGPTResponse(text);
-      setGptResponse(response);
-      toast({
-        title: "Sprachanalyse abgeschlossen",
-        description: "Die KI hat Ihre Eingabe verarbeitet.",
-      });
+      console.log("GPT Antwort:", response);
+      setOpen(false);
     } catch (error) {
       console.error("Fehler beim Senden:", error);
-      toast({
-        title: "Fehler",
-        description: "Die Verarbeitung konnte nicht abgeschlossen werden.",
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -97,27 +84,14 @@ export function SpeechToTextModal({ children }: { children: React.ReactNode }) {
           <DialogTitle>Speech to Text</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <div className="flex flex-col gap-4">
-            <div>
-              <Label>Ihre Spracheingabe</Label>
-              <Textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Ihre Sprache wird hier erscheinen..."
-                className="min-h-[100px]"
-              />
-            </div>
-
-            {gptResponse && (
-              <div>
-                <Label>KI-Antwort</Label>
-                <ScrollArea className="h-[200px] w-full rounded-md border p-4">
-                  <div className="text-sm">{gptResponse}</div>
-                </ScrollArea>
-              </div>
-            )}
+          <div className="flex gap-2">
+            <Textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Ihre Sprache wird hier erscheinen..."
+              className="min-h-[100px]"
+            />
           </div>
-
           <div className="flex justify-center gap-2">
             <Button
               variant={isListening ? "destructive" : "default"}
@@ -139,10 +113,10 @@ export function SpeechToTextModal({ children }: { children: React.ReactNode }) {
             <Button
               variant="secondary"
               onClick={handleSave}
-              disabled={isLoading || !text}
+              disabled={isLoading}
               className="w-full"
             >
-              {isLoading ? "Wird verarbeitet..." : "Analysieren"}
+              {isLoading ? "Wird verarbeitet..." : "Speichern"}
             </Button>
           </div>
         </div>

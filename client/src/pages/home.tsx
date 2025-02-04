@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { WelcomeCard } from "@/components/welcome-card";
+import { RecentIntakes } from "@/components/recent-intakes";
 
 type TimeRange = "24h" | "48h" | "72h" | "1w";
 
@@ -150,64 +151,10 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Intakes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {intakes?.map((intake) => (
-                <div
-                  key={intake.id}
-                  className="flex items-center justify-between border-b pb-2"
-                >
-                  <div>
-                    <div className="font-medium">
-                      {intake.drink?.name || "Custom Drink"}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {new Date(intake.timestamp).toLocaleString()}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="font-medium">{intake.amount}mg</div>
-                    <AddDrinkModal editIntakeData={intake}>
-                      <Button variant="ghost" size="icon">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </AddDrinkModal>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Intake</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete this caffeine
-                            intake? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() =>
-                              deleteIntakeMutation.mutate(intake.id)
-                            }
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <RecentIntakes
+          intakes={intakes}
+          onDeleteIntake={(id) => deleteIntakeMutation.mutate(id)}
+        />
       </div>
     </div>
   );
