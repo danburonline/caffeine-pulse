@@ -121,9 +121,9 @@ export function MetabolismChart({ intakes, timeRange = '24h', sleepStart, sleepE
 
     // Calculate interval based on time range
     const intervalMinutes = totalHours <= 24 ? 10 : // 10 min for 24h
-                          totalHours <= 48 ? 20 : // 20 min for 48h
-                          totalHours <= 72 ? 30 : // 30 min for 72h
-                          60; // 1 hour for 1 week
+                           totalHours <= 48 ? 20 : // 20 min for 48h
+                           totalHours <= 72 ? 30 : // 30 min for 72h
+                           60; // 1 hour for 1 week
 
     const points = Math.ceil((endTime.getTime() - startTime.getTime()) / (intervalMinutes * 60 * 1000));
 
