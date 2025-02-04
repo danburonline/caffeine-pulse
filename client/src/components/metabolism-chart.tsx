@@ -40,7 +40,7 @@ export function MetabolismChart({ intakes }: Props) {
   useEffect(() => {
     console.log('MetabolismChart received intakes:', intakes);
 
-    const dataPoints: Array<{ time: string; total: number; [key: string]: number }> = [];
+    const dataPoints: Array<{ time: string; [key: string]: number }> = [];
 
     // Start from today at midnight
     const startTime = new Date();
@@ -54,12 +54,11 @@ export function MetabolismChart({ intakes }: Props) {
     for (let i = 0; i <= 144; i++) { // 144 points = 24 hours with 10-minute intervals
       const pointTime = new Date(startTime.getTime() + i * 10 * 60 * 1000);
 
-      const point: { time: string; total: number; [key: string]: number } = {
+      const point: { time: string; [key: string]: number } = {
         time: pointTime.toLocaleTimeString([], { 
           hour: '2-digit', 
           minute: '2-digit',
         }),
-        total: 0,
       };
 
       // Calculate levels for each intake
@@ -67,7 +66,6 @@ export function MetabolismChart({ intakes }: Props) {
         const drinkName = intake.drink?.name || `Drink ${index + 1}`;
         const level = calculateCaffeineLevelForIntake(intake, pointTime);
         point[drinkName] = level;
-        point.total += level;
       });
 
       dataPoints.push(point);
@@ -163,15 +161,6 @@ export function MetabolismChart({ intakes }: Props) {
               />
             );
           })}
-          {/* Total line */}
-          <Line
-            type="monotone"
-            dataKey="total"
-            stroke="hsl(var(--primary))"
-            strokeWidth={2}
-            dot={false}
-            name="Total"
-          />
         </LineChart>
       </ResponsiveContainer>
     </div>

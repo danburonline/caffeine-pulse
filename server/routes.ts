@@ -154,6 +154,71 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  // Delete intake
+  app.delete("/api/intakes/:id", async (req, res) => {
+    try {
+      const intakeId = parseInt(req.params.id);
+      let user = await db.query.users.findFirst();
+
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+
+      const [deletedIntake] = await db.delete(intakes)
+        .where(and(
+          eq(intakes.id, intakeId),
+          eq(intakes.userId, user.id)
+        ))
+        .returning();
+
+      if (!deletedIntake) {
+        res.status(404).json({ message: "Intake not found" });
+        return;
+      }
+
+      res.json(deletedIntake);
+    } catch (error) {
+      console.error("Error in DELETE /api/intakes/:id:", error);
+      res.status(500).json({ message: "Failed to delete intake" });
+    }
+  });
+
+  // Update intake
+  app.patch("/api/intakes/:id", async (req, res) => {
+    try {
+      const intakeId = parseInt(req.params.id);
+      const { amount, timestamp } = req.body;
+      let user = await db.query.users.findFirst();
+
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+
+      const [updatedIntake] = await db.update(intakes)
+        .set({
+          amount,
+          timestamp: timestamp ? new Date(timestamp) : undefined,
+        })
+        .where(and(
+          eq(intakes.id, intakeId),
+          eq(intakes.userId, user.id)
+        ))
+        .returning();
+
+      if (!updatedIntake) {
+        res.status(404).json({ message: "Intake not found" });
+        return;
+      }
+
+      res.json(updatedIntake);
+    } catch (error) {
+      console.error("Error in PATCH /api/intakes/:id:", error);
+      res.status(500).json({ message: "Failed to update intake" });
+    }
+  });
+
   // Initialize default drinks with colors
   app.post("/api/drinks/init", async (req, res) => {
     try {
