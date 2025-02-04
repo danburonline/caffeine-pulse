@@ -1,5 +1,5 @@
 # Base stage for both development and production
-FROM node:20-slim as base
+FROM node:20 as base
 WORKDIR /app
 COPY . .
 RUN npm install
