@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export function WelcomeCard() {
   return (
-    <Card className="bg-primary/5">
+    <Card className="bg-white border-none drop-shadow-none">
       <CardContent className="pt-6">
         <h2 className="text-2xl font-semibold mb-2">
           Willkommen bei deinem persönlichen Koffein-Tracker!
